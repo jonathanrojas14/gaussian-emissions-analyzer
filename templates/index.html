@@ -45,7 +45,10 @@
             justify-content: center;
             color: white;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 999;
             overflow: hidden;
         }
         
@@ -96,6 +99,8 @@
         .main-container {
             display: flex;
             min-height: calc(100vh - 200px);
+            margin-top: 200px;
+            position: relative;
         }
         
         /* Barra lateral */
@@ -105,12 +110,13 @@
             box-shadow: 4px 0 15px rgba(0,0,0,0.1);
             padding: 30px 20px;
             position: fixed;
-            top: 200px;
+            top: 0;
             left: 0;
-            height: calc(100vh - 200px);
+            height: 100vh;
             overflow-y: auto;
-            z-index: 100;
+            z-index: 1000;
             animation: slideInLeft 0.8s ease-out;
+            padding-top: 220px;
         }
         
         @keyframes slideInLeft {
@@ -325,8 +331,13 @@
                 --sidebar-width: 100%;
             }
             
+            .banner {
+                position: relative;
+            }
+            
             .main-container {
                 flex-direction: column;
+                margin-top: 0;
             }
             
             .sidebar {
@@ -337,6 +348,7 @@
                 height: auto;
                 max-height: none;
                 padding: 20px;
+                padding-top: 20px;
             }
             
             .content-area {
