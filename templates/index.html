@@ -2,7 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="description" content="Análisis Gaussiano de Emisiones de Gases Atmosféricos">
+    <meta name="theme-color" content="#667eea">
     <title>🌍 Gaussian Emissions Analyzer</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -305,18 +307,203 @@
             50% { transform: scale(1.1); }
         }
         
-        /* Responsive */
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            :root {
+                --sidebar-width: 300px;
+            }
+            
+            .banner h1 {
+                font-size: 2rem;
+            }
+        }
+        
         @media (max-width: 992px) {
+            :root {
+                --sidebar-width: 100%;
+            }
+            
+            .main-container {
+                flex-direction: column;
+            }
+            
             .sidebar {
                 width: 100%;
                 position: relative;
                 height: auto;
+                max-height: none;
+                padding: 20px;
             }
+            
             .content-area {
                 margin-left: 0;
+                padding: 20px;
             }
+            
+            .banner {
+                height: 150px;
+            }
+            
             .banner h1 {
                 font-size: 1.8rem;
+            }
+            
+            .banner p {
+                font-size: 0.9rem;
+            }
+            
+            .result-card {
+                margin-bottom: 15px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .banner {
+                height: 120px;
+            }
+            
+            .banner h1 {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+            
+            .banner p {
+                font-size: 0.8rem;
+            }
+            
+            .sidebar {
+                padding: 15px;
+            }
+            
+            .sidebar h3 {
+                font-size: 1.2rem;
+                margin-bottom: 20px;
+            }
+            
+            .form-section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .btn-analyze {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            
+            .content-area {
+                padding: 15px;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .plot-container {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .result-card h5 {
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .banner {
+                height: 100px;
+            }
+            
+            .banner h1 {
+                font-size: 1.2rem;
+            }
+            
+            .banner p {
+                font-size: 0.7rem;
+            }
+            
+            .sidebar {
+                padding: 10px;
+            }
+            
+            .sidebar h3 {
+                font-size: 1rem;
+            }
+            
+            .form-section {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .form-section label {
+                font-size: 0.9rem;
+            }
+            
+            .btn-analyze {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .content-area {
+                padding: 10px;
+            }
+            
+            .result-card {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+            
+            .result-card h5 {
+                font-size: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            
+            .plot-container {
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+            
+            .plot-container h5 {
+                font-size: 0.95rem;
+            }
+            
+            /* Hacer el grid de estadísticas más compacto en móviles */
+            #stats .row .col-4 {
+                margin-bottom: 10px;
+            }
+            
+            /* Ajustar columnas para móviles */
+            .col-lg-6, .col-md-6 {
+                margin-bottom: 15px;
+            }
+        }
+        
+        /* Ajustes adicionales para pantallas muy pequeñas */
+        @media (max-width: 375px) {
+            .banner h1 {
+                font-size: 1rem;
+            }
+            
+            .sidebar h3 {
+                font-size: 0.9rem;
+            }
+            
+            .form-section label {
+                font-size: 0.85rem;
+            }
+            
+            .btn-analyze {
+                font-size: 0.85rem;
+            }
+            
+            .stat-value {
+                font-size: 1rem;
             }
         }
         
@@ -563,7 +750,7 @@
                         try {
                             console.log('Creando mapa interactivo...');
                             
-                            // Configuración para el mapa interactivo
+                            // Configuración para el mapa interactivo con responsividad
                             var heatmapConfig = {
                                 responsive: true,
                                 displayModeBar: true,
@@ -571,6 +758,15 @@
                                 displaylogo: false,
                                 scrollZoom: true
                             };
+                            
+                            // Ajustar altura según el tamaño de la pantalla
+                            if (response.heatmap.layout) {
+                                if (window.innerWidth < 768) {
+                                    response.heatmap.layout.height = 400;
+                                } else if (window.innerWidth < 992) {
+                                    response.heatmap.layout.height = 500;
+                                }
+                            }
                             
                             Plotly.newPlot('heatmap-plot', response.heatmap.data, response.heatmap.layout, heatmapConfig);
                             
@@ -581,10 +777,33 @@
                             });
                             
                             console.log('Creando rosa de vientos...');
-                            Plotly.newPlot('wind-rose', response.wind_rose.data, response.wind_rose.layout);
+                            
+                            // Ajustar altura de rosa de vientos
+                            if (response.wind_rose.layout) {
+                                if (window.innerWidth < 768) {
+                                    response.wind_rose.layout.height = 350;
+                                }
+                            }
+                            
+                            Plotly.newPlot('wind-rose', response.wind_rose.data, response.wind_rose.layout, {responsive: true});
                             
                             console.log('Creando serie temporal...');
-                            Plotly.newPlot('timeseries-plot', response.timeseries.data, response.timeseries.layout);
+                            
+                            // Ajustar altura de serie temporal
+                            if (response.timeseries.layout) {
+                                if (window.innerWidth < 768) {
+                                    response.timeseries.layout.height = 300;
+                                }
+                            }
+                            
+                            Plotly.newPlot('timeseries-plot', response.timeseries.data, response.timeseries.layout, {responsive: true});
+                            
+                            // Hacer que las gráficas se redimensionen cuando cambie el tamaño de ventana
+                            window.addEventListener('resize', function() {
+                                Plotly.Plots.resize('heatmap-plot');
+                                Plotly.Plots.resize('wind-rose');
+                                Plotly.Plots.resize('timeseries-plot');
+                            });
                             
                             console.log('✅ Todas las gráficas creadas exitosamente');
                         } catch(e) {
