@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Gaussiano - Gases</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .plot-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .results-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .file-label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Análisis Gaussiano de Gases Atmosféricos</h1>
+        <p class="text-center text-muted">Zona horaria: UTC-5 (America/Bogota)</p>
+        
+        <!-- Formulario de carga -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Cargar Datos de Campo</h5>
+                <form id="upload-form" class="mt-3">
+                    <div class="mb-3">
+                        <label class="file-label">1. Seleccionar tipo de gas a analizar:</label>
+                        <select class="form-select" id="gasType" name="gasType">
+                            <option value="CH4" selected>CH4 (Metano)</option>
+                            <option value="CO2">CO2 (Dióxido de Carbono)</option>
+                            <option value="H2O">H2O (Vapor de Agua)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="dataFile" class="file-label">2. Archivo del analizador (.data):</label>
+                        <input type="file" class="form-control" id="dataFile" name="dataFile" accept=".data" required>
+                        <small class="text-muted">Ejemplo: 7. Pozo Estación Gala s-n 1183.data</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="gpxFile" class="file-label">3. Archivo GPS (.gpx):</label>
+                        <input type="file" class="form-control" id="gpxFile" name="gpxFile" accept=".gpx" required>
+                        <small class="text-muted">Ejemplo: Track_TRACK ESTACION GALA_GPS 5290 del s-n 1183.gpx</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Analizar Datos</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Spinner de carga -->
+        <div id="loading-spinner" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Procesando...</span>
+            </div>
+            <p class="mt-3">Procesando datos, por favor espere...</p>
+        </div>
+
+        <!-- Contenedor de resultados -->
+        <div id="results-container" class="results-container d-none">
+            <h3>Resultados del Análisis</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Tasa de Emisión (Q)</h5>
+                            <p id="q-value" class="card-text"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Estadísticas del Modelo</h5>
+                            <p id="stats" class="card-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficas -->
+        <div id="plots-container" class="d-none">
+            <!-- Resumen de datos -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Resumen de Datos</h5>
+                    <p id="data-summary" class="card-text"></p>
+                </div>
+            </div>
+            
+            <!-- Mapa de calor interactivo -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">📍 Mapa Interactivo de Concentraciones</h5>
+                            <small>Usa el mouse para hacer zoom (scroll) y mover el mapa</small>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="plot-container">
+                                <div id="heatmap-plot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Serie temporal y rosa de vientos -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="plot-container">
+                        <div id="timeseries-plot"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="plot-container">
+                        <div id="wind-rose"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#upload-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var formData = new FormData();
+                var dataFileInput = $('#dataFile')[0];
+                var gpxFileInput = $('#gpxFile')[0];
+                var gasType = $('#gasType').val();
+                
+                if (dataFileInput.files.length === 0 || gpxFileInput.files.length === 0) {
+                    alert('Por favor seleccione ambos archivos (.data y .gpx)');
+                    return;
+                }
+                
+                formData.append('dataFile', dataFileInput.files[0]);
+                formData.append('gpxFile', gpxFileInput.files[0]);
+                formData.append('gasType', gasType);
+                
+                // Mostrar spinner
+                $('#loading-spinner').removeClass('d-none');
+                $('#results-container').addClass('d-none');
+                $('#plots-container').addClass('d-none');
+                
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log('Respuesta recibida:', response);
+                        
+                        // Ocultar spinner
+                        $('#loading-spinner').addClass('d-none');
+                        
+                        if (response.error) {
+                            alert('Error: ' + response.error);
+                            if (response.trace) {
+                                console.error('Trace:', response.trace);
+                            }
+                            return;
+                        }
+                        
+                        // Mostrar resultados
+                        $('#results-container').removeClass('d-none');
+                        $('#plots-container').removeClass('d-none');
+                        
+                        // Actualizar valores
+                        var qHtml = `<strong>Q</strong> = ${response.results.Q_hat_gps.toFixed(3)} ± ${response.results.Q_std_gps.toFixed(3)} g/s<br>` +
+                                    `<strong>Q</strong> = ${response.results.Q_hat_gph.toFixed(1)} ± ${response.results.Q_std_gph.toFixed(1)} g/h`;
+                        
+                        if (response.results.error) {
+                            qHtml += `<br><span class="text-warning">Nota: ${response.results.error}</span>`;
+                        }
+                        
+                        $('#q-value').html(qHtml);
+                        
+                        $('#stats').html(
+                            `<strong>R²</strong> = ${response.results.R2.toFixed(3)}<br>` +
+                            `<strong>Puntos utilizados:</strong> ${response.results.n_points}<br>` +
+                            `<strong>Clase de estabilidad:</strong> ${response.results.stability_used}`
+                        );
+                        
+                        // Actualizar resumen de datos
+                        if (response.data_summary) {
+                            var units = response.data_summary.gas_units || 'ppm';
+                            $('#data-summary').html(
+                                `<strong>Gas analizado:</strong> ${response.data_summary.gas_type}<br>` +
+                                `<strong>Unidades:</strong> ${units}<br>` +
+                                `<strong>Total de puntos:</strong> ${response.data_summary.total_points}<br>` +
+                                `<strong>${response.data_summary.gas_type} promedio:</strong> ${response.data_summary.gas_mean.toFixed(1)} ${units}<br>` +
+                                `<strong>${response.data_summary.gas_type} máximo:</strong> ${response.data_summary.gas_max.toFixed(1)} ${units}<br>` +
+                                `<strong>${response.data_summary.gas_type} mínimo:</strong> ${response.data_summary.gas_min.toFixed(1)} ${units}<br>` +
+                                `<strong>Rango temporal:</strong> ${response.data_summary.time_range}`
+                            );
+                        }
+                        
+                        // Crear gráficas
+                        try {
+                            console.log('Creando mapa interactivo...');
+                            
+                            // Configuración para el mapa interactivo
+                            var heatmapConfig = {
+                                responsive: true,
+                                displayModeBar: true,
+                                modeBarButtonsToAdd: ['toggleHover'],
+                                displaylogo: false,
+                                scrollZoom: true
+                            };
+                            
+                            Plotly.newPlot('heatmap-plot', response.heatmap.data, response.heatmap.layout, heatmapConfig);
+                            
+                            // Hacer que el mapa sea más interactivo
+                            var heatmapDiv = document.getElementById('heatmap-plot');
+                            heatmapDiv.on('plotly_relayout', function(eventdata) {
+                                console.log('Mapa actualizado:', eventdata);
+                            });
+                            
+                            console.log('Creando rosa de vientos...');
+                            Plotly.newPlot('wind-rose', response.wind_rose.data, response.wind_rose.layout);
+                            
+                            console.log('Creando serie temporal...');
+                            Plotly.newPlot('timeseries-plot', response.timeseries.data, response.timeseries.layout);
+                            
+                            console.log('✅ Todas las gráficas creadas exitosamente');
+                        } catch(e) {
+                            console.error('Error al crear gráficas:', e);
+                            alert('Error al crear las gráficas: ' + e.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#loading-spinner').addClass('d-none');
+                        console.error('Error AJAX:', {xhr: xhr, status: status, error: error});
+                        console.error('Respuesta:', xhr.responseText);
+                        alert('Error en el servidor: ' + error + '\nEstado: ' + status);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

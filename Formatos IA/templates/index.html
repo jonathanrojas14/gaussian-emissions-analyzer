@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Gaussiano CH4</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .plot-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .results-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Análisis Gaussiano de CH4</h1>
+        
+        <!-- Formulario de carga -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Cargar Datos</h5>
+                <form id="upload-form" class="mt-3">
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label">Seleccionar archivo CSV</label>
+                        <input type="file" class="form-control" id="csvFile" accept=".csv">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Analizar Datos</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Contenedor de resultados -->
+        <div id="results-container" class="results-container d-none">
+            <h3>Resultados del Análisis</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Tasa de Emisión (Q)</h5>
+                            <p id="q-value" class="card-text"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Estadísticas</h5>
+                            <p id="stats" class="card-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficas -->
+        <div id="plots-container" class="d-none">
+            <!-- Resumen de datos -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Resumen de Datos</h5>
+                    <p id="data-summary" class="card-text"></p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="plot-container">
+                        <div id="scatter-plot"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="plot-container">
+                        <div id="timeseries-plot"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="plot-container">
+                        <div id="wind-rose"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#upload-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                var formData = new FormData();
+                var fileInput = $('#csvFile')[0];
+                
+                if (fileInput.files.length > 0) {
+                    formData.append('file', fileInput.files[0]);
+                    
+                    $.ajax({
+                        url: '/upload',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            console.log('Respuesta recibida:', response);
+                            
+                            if (response.error) {
+                                alert('Error: ' + response.error);
+                                if (response.columns) {
+                                    console.log('Columnas del CSV:', response.columns);
+                                }
+                                return;
+                            }
+                            
+                            // Mostrar resultados
+                            $('#results-container').removeClass('d-none');
+                            $('#plots-container').removeClass('d-none');
+                            
+                            // Actualizar valores
+                            $('#q-value').html(
+                                `Q = ${response.results.Q_hat_gps.toFixed(3)} ± ${response.results.Q_std_gps.toFixed(3)} g/s<br>` +
+                                `(${response.results.Q_hat_gph.toFixed(1)} ± ${response.results.Q_std_gph.toFixed(1)} g/h)`
+                            );
+                            
+                            $('#stats').html(
+                                `R² = ${response.results.R2.toFixed(3)}<br>` +
+                                `Puntos utilizados: ${response.results.n_points}<br>` +
+                                `Clase de estabilidad: ${response.results.stability_used}`
+                            );
+                            
+                            // Actualizar resumen de datos
+                            if (response.data_summary) {
+                                $('#data-summary').html(
+                                    `Total de puntos: ${response.data_summary.total_points}<br>` +
+                                    `CH4 promedio: ${response.data_summary.ch4_mean.toFixed(3)} ppm<br>` +
+                                    `CH4 máximo: ${response.data_summary.ch4_max.toFixed(3)} ppm<br>` +
+                                    `CH4 mínimo: ${response.data_summary.ch4_min.toFixed(3)} ppm`
+                                );
+                            }
+                            
+                            // Crear gráficas (usar scatter_plot_2d como respaldo)
+                            try {
+                                var scatterData = response.scatter_plot_2d || response.scatter_plot;
+                                console.log('Creando gráfica de dispersión...');
+                                Plotly.newPlot('scatter-plot', scatterData.data, scatterData.layout);
+                                
+                                console.log('Creando rosa de vientos...');
+                                Plotly.newPlot('wind-rose', response.wind_rose.data, response.wind_rose.layout);
+                                
+                                // Agregar serie temporal si existe
+                                if (response.timeseries) {
+                                    console.log('Creando serie temporal...');
+                                    Plotly.newPlot('timeseries-plot', response.timeseries.data, response.timeseries.layout);
+                                }
+                                
+                                console.log('Todas las gráficas creadas exitosamente');
+                            } catch(e) {
+                                console.error('Error al crear gráficas:', e);
+                                alert('Error al crear las gráficas: ' + e.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error AJAX:', {xhr: xhr, status: status, error: error});
+                            console.error('Respuesta:', xhr.responseText);
+                            alert('Error en el servidor: ' + error + '\nEstado: ' + status);
+                        }
+                    });
+                } else {
+                    alert('Por favor seleccione un archivo CSV');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
