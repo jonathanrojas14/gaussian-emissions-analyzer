@@ -648,8 +648,19 @@
 
             <!-- Gráficas -->
             <div id="plots-container" class="d-none">
+                <!-- Gráfico Observado vs Modelado -->
+                <div id="obs-vs-pred-container" class="plot-container fade-in-up d-none" style="animation-delay: 0.3s">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-scatter"></i> Ajuste del Modelo: Observado vs Modelado
+                        <small style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
+                            Comparación entre concentraciones medidas y predichas por el modelo
+                        </small>
+                    </h5>
+                    <div id="obs-vs-pred-plot"></div>
+                </div>
+                
                 <!-- Mapa Interactivo -->
-                <div class="plot-container fade-in-up" style="animation-delay: 0.3s">
+                <div class="plot-container fade-in-up" style="animation-delay: 0.4s">
                     <h5 class="mb-3">
                         <i class="fas fa-map-marked-alt"></i> Mapa Interactivo de Concentraciones
                         <small id="map-units" style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
@@ -813,7 +824,7 @@
                         $('#q-value').html(qHtml);
                         
                         var statsHtml = `
-                            <div class="row text-center">
+                            <div class="row text-center mb-3">
                                 <div class="col-4">
                                     <div class="stat-label">Coeficiente R²</div>
                                     <div class="stat-value" style="font-size: 1.5rem;">${response.results.R2.toFixed(3)}</div>
@@ -831,6 +842,38 @@
                                 </div>
                             </div>
                         `;
+                        
+                        // Agregar métricas adicionales si están disponibles
+                        if (response.results.metrics) {
+                            var m = response.results.metrics;
+                            var units = response.data_summary.gas_units || 'ppm';
+                            statsHtml += `
+                                <hr style="margin: 15px 0;">
+                                <h6 class="mb-2"><i class="fas fa-calculator"></i> Métricas de Ajuste Adicionales</h6>
+                                <div class="row text-center">
+                                    <div class="col-3">
+                                        <div class="stat-label">MAE</div>
+                                        <div style="font-size: 1.2rem; font-weight: 600; color: #3498db;">${m.MAE.toFixed(2)}</div>
+                                        <small style="color: #7f8c8d; font-size: 0.75rem;">${units}<br>(Error Abs. Medio)</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="stat-label">RMSE</div>
+                                        <div style="font-size: 1.2rem; font-weight: 600; color: #9b59b6;">${m.RMSE.toFixed(2)}</div>
+                                        <small style="color: #7f8c8d; font-size: 0.75rem;">${units}<br>(Raíz ECM)</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="stat-label">MSE</div>
+                                        <div style="font-size: 1.2rem; font-weight: 600; color: #e67e22;">${m.MSE.toFixed(2)}</div>
+                                        <small style="color: #7f8c8d; font-size: 0.75rem;">${units}²<br>(Error Cuad. Medio)</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="stat-label">MAPE</div>
+                                        <div style="font-size: 1.2rem; font-weight: 600; color: #16a085;">${m.MAPE.toFixed(2)}</div>
+                                        <small style="color: #7f8c8d; font-size: 0.75rem;">%<br>(Error % Medio)</small>
+                                    </div>
+                                </div>
+                            `;
+                        }
                         
                         // Mostrar advertencia si R² es bajo
                         if (response.results.warning && response.results.suggestions) {
@@ -909,6 +952,13 @@
                         
                         // Crear gráficas
                         try {
+                            // Crear gráfico de observado vs modelado si está disponible
+                            if (response.obs_vs_pred) {
+                                console.log('Creando gráfico observado vs modelado...');
+                                $('#obs-vs-pred-container').removeClass('d-none');
+                                Plotly.newPlot('obs-vs-pred-plot', response.obs_vs_pred.data, response.obs_vs_pred.layout, {responsive: true});
+                            }
+                            
                             console.log('Creando mapa interactivo...');
                             
                             // Configuración para el mapa interactivo con responsividad
@@ -961,6 +1011,9 @@
                             
                             // Hacer que las gráficas se redimensionen cuando cambie el tamaño de ventana
                             window.addEventListener('resize', function() {
+                                if (response.obs_vs_pred) {
+                                    Plotly.Plots.resize('obs-vs-pred-plot');
+                                }
                                 Plotly.Plots.resize('heatmap-plot');
                                 Plotly.Plots.resize('wind-rose');
                                 Plotly.Plots.resize('timeseries-plot');

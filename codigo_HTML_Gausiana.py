@@ -399,6 +399,36 @@ def upload_file():
                 results = best_results
                 print(f"\n*** MEJOR RESULTADO: R²={results['R2']:.3f}, Estabilidad={results['stability_used']} ***\n")
                 
+                # Calcular métricas adicionales de ajuste
+                if 'observed' in results and 'predicted' in results:
+                    observed = np.array(results['observed'])
+                    predicted = np.array(results['predicted'])
+                    
+                    # MAE (Mean Absolute Error)
+                    mae = np.mean(np.abs(observed - predicted))
+                    
+                    # MSE (Mean Squared Error)
+                    mse = np.mean((observed - predicted) ** 2)
+                    
+                    # RMSE (Root Mean Squared Error)
+                    rmse = np.sqrt(mse)
+                    
+                    # MAPE (Mean Absolute Percentage Error) - evitar división por cero
+                    mask = observed != 0
+                    if np.any(mask):
+                        mape = np.mean(np.abs((observed[mask] - predicted[mask]) / observed[mask])) * 100
+                    else:
+                        mape = 0.0
+                    
+                    results['metrics'] = {
+                        'MAE': float(mae),
+                        'MSE': float(mse),
+                        'RMSE': float(rmse),
+                        'MAPE': float(mape)
+                    }
+                    
+                    print(f"Métricas de ajuste: MAE={mae:.2f}, RMSE={rmse:.2f}, MAPE={mape:.2f}%")
+                
                 # Agregar sugerencias si el R² es bajo
                 if results['R2'] < 0.5:
                     results['warning'] = "El R² es bajo, lo que indica que el modelo no se ajusta bien a los datos."
@@ -478,6 +508,76 @@ def upload_file():
                 "trace": error_trace
             }
             print(f"Error en análisis: {error_trace}")
+        
+        # Crear gráfico de observado vs modelado si hay datos disponibles
+        fig_obs_vs_pred = None
+        if 'observed' in results and 'predicted' in results and len(results['observed']) > 0:
+            observed_vals = results['observed']
+            predicted_vals = results['predicted']
+            
+            # Crear gráfico de dispersión
+            fig_obs_vs_pred = go.Figure()
+            
+            # Puntos observados vs predichos
+            fig_obs_vs_pred.add_trace(go.Scatter(
+                x=observed_vals,
+                y=predicted_vals,
+                mode='markers',
+                name='Datos',
+                marker=dict(
+                    size=8,
+                    color=observed_vals,
+                    colorscale='Viridis',
+                    showscale=True,
+                    colorbar=dict(
+                        title=f"{gas_type}<br>Observado<br>({gas_units})",
+                        x=1.15
+                    ),
+                    line=dict(color='white', width=0.5)
+                ),
+                hovertemplate='<b>Observado:</b> %{x:.2f} ' + gas_units + '<br><b>Modelado:</b> %{y:.2f} ' + gas_units + '<extra></extra>'
+            ))
+            
+            # Línea de ajuste perfecto (y=x)
+            min_val = min(min(observed_vals), min(predicted_vals))
+            max_val = max(max(observed_vals), max(predicted_vals))
+            fig_obs_vs_pred.add_trace(go.Scatter(
+                x=[min_val, max_val],
+                y=[min_val, max_val],
+                mode='lines',
+                name='Ajuste perfecto (y=x)',
+                line=dict(color='red', width=2, dash='dash'),
+                hoverinfo='skip'
+            ))
+            
+            # Configuración del layout
+            fig_obs_vs_pred.update_layout(
+                title=dict(
+                    text=f'Observado vs Modelado - {gas_type}<br><sub>R² = {results["R2"]:.3f}</sub>',
+                    font=dict(size=16, color='#2c3e50'),
+                    x=0.5,
+                    xanchor='center'
+                ),
+                xaxis_title=f'Concentración Observada ({gas_units})',
+                yaxis_title=f'Concentración Modelada ({gas_units})',
+                height=500,
+                showlegend=True,
+                legend=dict(
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="left",
+                    x=0.01,
+                    bgcolor="rgba(255,255,255,0.9)",
+                    bordercolor="Black",
+                    borderwidth=1
+                ),
+                hovermode='closest',
+                plot_bgcolor='rgba(240,240,240,0.5)'
+            )
+            
+            # Agregar grid
+            fig_obs_vs_pred.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+            fig_obs_vs_pred.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
         
         # Crear gráficas
         # 1. Mapa satelital 3D con puntos y mapa de calor
@@ -696,6 +796,7 @@ def upload_file():
             'heatmap': json.loads(fig_heatmap.to_json()),
             'wind_rose': json.loads(wind_rose.to_json()),
             'timeseries': timeseries_json,
+            'obs_vs_pred': json.loads(fig_obs_vs_pred.to_json()) if fig_obs_vs_pred else None,
             'data_summary': {
                 'total_points': len(merged_df),
                 'gas_mean': float(merged_df['gas_concentration'].mean()),

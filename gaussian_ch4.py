@@ -284,6 +284,12 @@ def preprocess_and_invert(df: pd.DataFrame,
 
     Q_hat, Q_std, r2 = invert_emission_rate(xw[mask], yw[mask], z[mask], u[mask], H,
                                             dC[mask], sigy[mask], sigz[mask], weights=None)
+    
+    # Calcular valores predichos para gráfico observado vs modelado
+    predicted = gaussian_concentration(Q_hat, xw[mask], yw[mask], z[mask], u[mask], H, 
+                                      sigy[mask], sigz[mask])
+    observed = dC[mask]
+    
     return {
         "Q_hat_gps": Q_hat,
         "Q_std_gps": Q_std,
@@ -291,7 +297,9 @@ def preprocess_and_invert(df: pd.DataFrame,
         "Q_std_gph": Q_std * 3600.0,
         "R2": r2,
         "n_points": int(mask.sum()),
-        "stability_used": stab
+        "stability_used": stab,
+        "observed": observed.tolist(),
+        "predicted": predicted.tolist()
     }
 
 # -----------------------------
