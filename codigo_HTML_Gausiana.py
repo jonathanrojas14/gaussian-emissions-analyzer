@@ -504,7 +504,7 @@ def upload_file():
         ))
         
         wind_rose.update_layout(
-            title=f'Rosa de Vientos (Total: {len(df)} mediciones)',
+            title=f'Rosa de Vientos (Total2: {len(df)} mediciones)',
             polar=dict(
                 radialaxis=dict(
                     visible=True,
