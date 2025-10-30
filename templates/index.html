@@ -606,7 +606,12 @@
 
             <!-- Resumen de Datos -->
             <div id="data-summary-card" class="result-card primary d-none fade-in-up">
-                <h5><i class="fas fa-info-circle"></i> Resumen de Datos</h5>
+                <h5>
+                    <i class="fas fa-info-circle"></i> Resumen de Datos Procesados
+                    <small style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
+                        Estadísticas de las concentraciones medidas
+                    </small>
+                </h5>
                 <div id="data-summary"></div>
             </div>
 
@@ -616,7 +621,12 @@
                     <!-- Tasa de Emisión -->
                     <div class="col-md-6">
                         <div class="result-card success fade-in-up" style="animation-delay: 0.1s">
-                            <h5><i class="fas fa-fire"></i> Tasa de Emisión</h5>
+                            <h5>
+                                <i class="fas fa-fire"></i> Tasa de Emisión (Q)
+                                <small style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
+                                    Cantidad de gas emitido por unidad de tiempo
+                                </small>
+                            </h5>
                             <div id="q-value"></div>
                         </div>
                     </div>
@@ -624,7 +634,12 @@
                     <!-- Estadísticas del Modelo -->
                     <div class="col-md-6">
                         <div class="result-card warning fade-in-up" style="animation-delay: 0.2s">
-                            <h5><i class="fas fa-chart-bar"></i> Estadísticas del Modelo</h5>
+                            <h5>
+                                <i class="fas fa-chart-bar"></i> Estadísticas del Modelo Gaussiano
+                                <small style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
+                                    Calidad del ajuste y parámetros utilizados
+                                </small>
+                            </h5>
                             <div id="stats"></div>
                         </div>
                     </div>
@@ -635,7 +650,12 @@
             <div id="plots-container" class="d-none">
                 <!-- Mapa Interactivo -->
                 <div class="plot-container fade-in-up" style="animation-delay: 0.3s">
-                    <h5 class="mb-3"><i class="fas fa-map-marked-alt"></i> Mapa Interactivo de Concentraciones</h5>
+                    <h5 class="mb-3">
+                        <i class="fas fa-map-marked-alt"></i> Mapa Interactivo de Concentraciones
+                        <small id="map-units" style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
+                            Distribución espacial de concentraciones
+                        </small>
+                    </h5>
                     <div id="heatmap-plot"></div>
                 </div>
                 
@@ -643,13 +663,23 @@
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="plot-container fade-in-up" style="animation-delay: 0.4s">
-                            <h5 class="mb-3"><i class="fas fa-clock"></i> Serie Temporal</h5>
+                            <h5 class="mb-3">
+                                <i class="fas fa-clock"></i> Serie Temporal de Concentraciones
+                                <small id="timeseries-units" style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
+                                    Variación de concentración en el tiempo
+                                </small>
+                            </h5>
                             <div id="timeseries-plot"></div>
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="plot-container fade-in-up" style="animation-delay: 0.5s">
-                            <h5 class="mb-3"><i class="fas fa-compass"></i> Rosa de Vientos</h5>
+                            <h5 class="mb-3">
+                                <i class="fas fa-compass"></i> Rosa de Vientos
+                                <small style="font-size: 0.8rem; font-weight: normal; color: #7f8c8d; display: block; margin-top: 5px;">
+                                    Distribución direccional de mediciones
+                                </small>
+                            </h5>
                             <div id="wind-rose"></div>
                         </div>
                     </div>
@@ -707,13 +737,25 @@
                         $('#results-container').removeClass('d-none');
                         $('#plots-container').removeClass('d-none');
                         
-                        // Actualizar valores con diseño mejorado
+                        // Actualizar valores con diseño mejorado y unidades claras
                         var qHtml = `
-                            <div class="stat-label">Gramos por segundo</div>
-                            <div class="stat-value">${response.results.Q_hat_gps.toFixed(3)} <small style="font-size: 1rem;">± ${response.results.Q_std_gps.toFixed(3)}</small></div>
-                            <hr>
-                            <div class="stat-label">Gramos por hora</div>
-                            <div class="stat-value">${response.results.Q_hat_gph.toFixed(1)} <small style="font-size: 1rem;">± ${response.results.Q_std_gph.toFixed(1)}</small></div>
+                            <div class="stat-label">Tasa de Emisión (Q)</div>
+                            <div class="stat-value" style="color: #27ae60;">
+                                ${response.results.Q_hat_gps.toFixed(3)} 
+                                <span style="font-size: 1.2rem; font-weight: 600; color: #2c3e50;">g/s</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px; margin-bottom: 15px;">
+                                ± ${response.results.Q_std_gps.toFixed(3)} g/s (desviación estándar)
+                            </div>
+                            <hr style="margin: 15px 0;">
+                            <div class="stat-label">Tasa de Emisión (Q)</div>
+                            <div class="stat-value" style="color: #27ae60;">
+                                ${response.results.Q_hat_gph.toFixed(1)} 
+                                <span style="font-size: 1.2rem; font-weight: 600; color: #2c3e50;">g/h</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;">
+                                ± ${response.results.Q_std_gph.toFixed(1)} g/h (desviación estándar)
+                            </div>
                         `;
                         
                         if (response.results.error) {
@@ -773,16 +815,19 @@
                         var statsHtml = `
                             <div class="row text-center">
                                 <div class="col-4">
-                                    <div class="stat-label">R²</div>
+                                    <div class="stat-label">Coeficiente R²</div>
                                     <div class="stat-value" style="font-size: 1.5rem;">${response.results.R2.toFixed(3)}</div>
+                                    <small style="color: #7f8c8d;">(ajuste del modelo)</small>
                                 </div>
                                 <div class="col-4">
-                                    <div class="stat-label">Puntos</div>
+                                    <div class="stat-label">Puntos Usados</div>
                                     <div class="stat-value" style="font-size: 1.5rem;">${response.results.n_points}</div>
+                                    <small style="color: #7f8c8d;">(observaciones)</small>
                                 </div>
                                 <div class="col-4">
-                                    <div class="stat-label">Estabilidad</div>
+                                    <div class="stat-label">Clase Estabilidad</div>
                                     <div class="stat-value" style="font-size: 1.5rem;">${response.results.stability_used}</div>
+                                    <small style="color: #7f8c8d;">(Pasquill-Gifford)</small>
                                 </div>
                             </div>
                         `;
@@ -821,17 +866,42 @@
                             var gasIcon = response.data_summary.gas_type === 'CH4' ? '🔥' : 
                                         response.data_summary.gas_type === 'CO2' ? '🌫️' : '💧';
                             
+                            // Actualizar unidades en los títulos de gráficos
+                            $('#map-units').html(`Distribución espacial de ${response.data_summary.gas_type} (${units})`);
+                            $('#timeseries-units').html(`Variación de ${response.data_summary.gas_type} en el tiempo (${units})`);
+                            
                             $('#data-summary').html(`
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <p><i class="fas fa-flask text-primary"></i> <strong>Gas:</strong> ${gasIcon} ${response.data_summary.gas_type} (${units})</p>
-                                        <p><i class="fas fa-chart-line text-success"></i> <strong>Promedio:</strong> ${response.data_summary.gas_mean.toFixed(2)} ${units}</p>
-                                        <p><i class="fas fa-arrow-up text-danger"></i> <strong>Máximo:</strong> ${response.data_summary.gas_max.toFixed(2)} ${units}</p>
+                                        <p style="margin-bottom: 12px;">
+                                            <i class="fas fa-flask text-primary"></i> <strong>Gas Analizado:</strong> 
+                                            ${gasIcon} <span style="font-size: 1.1rem; font-weight: 600;">${response.data_summary.gas_type}</span>
+                                        </p>
+                                        <p style="margin-bottom: 12px;">
+                                            <i class="fas fa-chart-line text-success"></i> <strong>Concentración Promedio:</strong><br>
+                                            <span style="font-size: 1.3rem; font-weight: 600; color: #27ae60;">${response.data_summary.gas_mean.toFixed(2)}</span>
+                                            <span style="font-size: 1.1rem; font-weight: 600; color: #2c3e50;"> ${units}</span>
+                                        </p>
+                                        <p style="margin-bottom: 12px;">
+                                            <i class="fas fa-arrow-up text-danger"></i> <strong>Concentración Máxima:</strong><br>
+                                            <span style="font-size: 1.2rem; font-weight: 600; color: #e74c3c;">${response.data_summary.gas_max.toFixed(2)}</span>
+                                            <span style="font-size: 1rem; font-weight: 600; color: #2c3e50;"> ${units}</span>
+                                        </p>
                                     </div>
                                     <div class="col-md-6">
-                                        <p><i class="fas fa-arrow-down text-info"></i> <strong>Mínimo:</strong> ${response.data_summary.gas_min.toFixed(2)} ${units}</p>
-                                        <p><i class="fas fa-map-marker-alt text-warning"></i> <strong>Puntos GPS:</strong> ${response.data_summary.total_points}</p>
-                                        <p><i class="fas fa-clock text-secondary"></i> <strong>Período:</strong><br><small>${response.data_summary.time_range}</small></p>
+                                        <p style="margin-bottom: 12px;">
+                                            <i class="fas fa-arrow-down text-info"></i> <strong>Concentración Mínima:</strong><br>
+                                            <span style="font-size: 1.2rem; font-weight: 600; color: #3498db;">${response.data_summary.gas_min.toFixed(2)}</span>
+                                            <span style="font-size: 1rem; font-weight: 600; color: #2c3e50;"> ${units}</span>
+                                        </p>
+                                        <p style="margin-bottom: 12px;">
+                                            <i class="fas fa-map-marker-alt text-warning"></i> <strong>Total de Puntos GPS:</strong> 
+                                            <span style="font-size: 1.2rem; font-weight: 600; color: #f39c12;">${response.data_summary.total_points}</span>
+                                        </p>
+                                        <p style="margin-bottom: 0;">
+                                            <i class="fas fa-clock text-secondary"></i> <strong>Período de Medición:</strong><br>
+                                            <small style="font-size: 0.85rem; color: #7f8c8d;">${response.data_summary.time_range}</small>
+                                        </p>
                                     </div>
                                 </div>
                             `);
