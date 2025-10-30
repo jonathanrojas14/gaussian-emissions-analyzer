@@ -1,0 +1,562 @@
+/* Variables CSS */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --sidebar-width: 350px;
+}
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Banner superior con imagen */
+.banner {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), 
+                url('/static/banner.jpg.webp') center/cover;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    overflow: hidden;
+}
+
+.banner::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3));
+    animation: bannerShift 10s ease-in-out infinite;
+}
+
+@keyframes bannerShift {
+    0%, 100% { transform: translateX(-5%); }
+    50% { transform: translateX(5%); }
+}
+
+.banner-content {
+    z-index: 10;
+    text-align: center;
+    animation: fadeInDown 1s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.banner h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+    margin-bottom: 10px;
+}
+
+.banner p {
+    font-size: 1.1rem;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+}
+
+/* Contenedor principal */
+.main-container {
+    display: flex;
+    min-height: calc(100vh - 200px);
+    margin-top: 200px;
+    position: relative;
+}
+
+/* Barra lateral */
+.sidebar {
+    width: var(--sidebar-width);
+    background: white;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    padding: 30px 20px;
+    position: fixed;
+    top: 200px;
+    left: 0;
+    height: calc(100vh - 200px);
+    overflow-y: auto;
+    z-index: 900;
+    animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 10px;
+}
+
+.sidebar h3 {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    border-left: 4px solid var(--secondary-color);
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.form-section label {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-section label i {
+    color: var(--secondary-color);
+}
+
+.form-control, .form-select {
+    border: 2px solid #e0e6ed;
+    border-radius: 8px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.btn-analyze {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--secondary-color), #5dade2);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    background: linear-gradient(135deg, #5dade2, var(--secondary-color));
+}
+
+.btn-analyze:active {
+    transform: translateY(0);
+}
+
+/* Sección de exportación */
+#export-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 2px solid #dee2e6;
+}
+
+#export-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+#export-csv-btn, #export-pdf-btn {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+#export-csv-btn:hover {
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+#export-pdf-btn:hover {
+    background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+/* Área de contenido principal */
+.content-area {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    padding: 30px;
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Spinner de carga */
+.loading-spinner {
+    text-align: center;
+    padding: 60px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.spinner-border {
+    width: 4rem;
+    height: 4rem;
+    border-width: 5px;
+}
+
+/* Tarjetas de resultados */
+.result-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border-left: 5px solid transparent;
+}
+
+.result-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.result-card.primary { border-left-color: var(--secondary-color); }
+.result-card.success { border-left-color: var(--success-color); }
+.result-card.warning { border-left-color: var(--warning-color); }
+.result-card.danger { border-left-color: var(--accent-color); }
+.result-card.info { border-left-color: #16a085; }
+
+.result-card h5 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin: 10px 0;
+}
+
+.stat-label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Contenedor de gráficas */
+.plot-container {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.plot-container:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+/* Iconos animados */
+.icon-pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    :root {
+        --sidebar-width: 300px;
+    }
+    
+    .banner h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 992px) {
+    :root {
+        --sidebar-width: 100%;
+    }
+    
+    .banner {
+        position: relative;
+    }
+    
+    .main-container {
+        flex-direction: column;
+        margin-top: 0;
+    }
+    
+    .sidebar {
+        width: 100%;
+        position: relative;
+        top: 0;
+        left: 0;
+        height: auto;
+        max-height: none;
+        padding: 20px;
+        padding-top: 20px;
+    }
+    
+    .content-area {
+        margin-left: 0;
+        padding: 20px;
+    }
+    
+    .banner {
+        height: 150px;
+    }
+    
+    .banner h1 {
+        font-size: 1.8rem;
+    }
+    
+    .banner p {
+        font-size: 0.9rem;
+    }
+    
+    .result-card {
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .banner {
+        height: 120px;
+    }
+    
+    .banner h1 {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+    
+    .banner p {
+        font-size: 0.8rem;
+    }
+    
+    .sidebar {
+        padding: 15px;
+    }
+    
+    .sidebar h3 {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+    }
+    
+    .form-section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .btn-analyze {
+        padding: 12px;
+        font-size: 1rem;
+    }
+    
+    .content-area {
+        padding: 15px;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .plot-container {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .result-card h5 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .banner {
+        height: 100px;
+    }
+    
+    .banner h1 {
+        font-size: 1.2rem;
+    }
+    
+    .banner p {
+        font-size: 0.7rem;
+    }
+    
+    .sidebar {
+        padding: 10px;
+    }
+    
+    .sidebar h3 {
+        font-size: 1rem;
+    }
+    
+    .form-section {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .form-section label {
+        font-size: 0.9rem;
+    }
+    
+    .btn-analyze {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .content-area {
+        padding: 10px;
+    }
+    
+    .result-card {
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .result-card h5 {
+        font-size: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .plot-container {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .plot-container h5 {
+        font-size: 0.95rem;
+    }
+    
+    /* Hacer el grid de estadísticas más compacto en móviles */
+    #stats .row .col-4 {
+        margin-bottom: 10px;
+    }
+    
+    /* Ajustar columnas para móviles */
+    .col-lg-6, .col-md-6 {
+        margin-bottom: 15px;
+    }
+}
+
+/* Ajustes adicionales para pantallas muy pequeñas */
+@media (max-width: 375px) {
+    .banner h1 {
+        font-size: 1rem;
+    }
+    
+    .sidebar h3 {
+        font-size: 0.9rem;
+    }
+    
+    .form-section label {
+        font-size: 0.85rem;
+    }
+    
+    .btn-analyze {
+        font-size: 0.85rem;
+    }
+    
+    .stat-value {
+        font-size: 1rem;
+    }
+}
+
+/* Animación de entrada para tarjetas */
+.fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
