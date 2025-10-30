@@ -717,7 +717,24 @@
                         `;
                         
                         if (response.results.error) {
-                            qHtml += `<div class="alert alert-warning mt-3 mb-0"><i class="fas fa-exclamation-triangle"></i> ${response.results.error}</div>`;
+                            qHtml += `<div class="alert alert-warning mt-3 mb-0">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                <strong>No se pudo calcular:</strong><br>
+                                ${response.results.error}
+                            </div>`;
+                            
+                            // Mostrar información de debug si está disponible
+                            if (response.results.debug_info) {
+                                qHtml += `<div class="alert alert-info mt-2 mb-0">
+                                    <small>
+                                        <strong>Información de depuración:</strong><br>
+                                        • Puntos combinados: ${response.results.debug_info.merged_points}<br>
+                                        • Puntos filtrados: ${response.results.debug_info.filtered_points}<br>
+                                        • Concentración background: ${response.results.debug_info.background}<br>
+                                        • Rango de gas: ${response.results.debug_info.gas_range}
+                                    </small>
+                                </div>`;
+                            }
                         }
                         
                         $('#q-value').html(qHtml);

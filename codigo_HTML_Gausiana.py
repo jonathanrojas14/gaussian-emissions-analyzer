@@ -190,7 +190,14 @@ def upload_file():
     sys.stdout.flush()
     
     if data_file.filename == '' or gpx_file.filename == '':
-        return jsonify({'error': 'Archivos no seleccionados'})
+        return jsonify({'error': 'Por favor seleccione ambos archivos (.data y .gpx)'})
+    
+    # Validar extensiones de archivo
+    if not data_file.filename.endswith('.data'):
+        return jsonify({'error': f'El archivo "{data_file.filename}" no es un archivo .data válido. Por favor seleccione un archivo del analizador LI-7810.'})
+    
+    if not gpx_file.filename.endswith('.gpx'):
+        return jsonify({'error': f'El archivo "{gpx_file.filename}" no es un archivo .gpx válido. Por favor seleccione un archivo GPS válido.'})
     
     try:
         # Guardar archivos temporalmente
@@ -201,13 +208,42 @@ def upload_file():
         
         print("Archivos guardados temporalmente")
         
-        # Parsear archivos
-        gps_df = parse_gpx_file(gpx_path)
-        print(f"GPS DataFrame: {len(gps_df)} puntos")
+        # Parsear archivos con manejo de errores
+        try:
+            gps_df = parse_gpx_file(gpx_path)
+            print(f"GPS DataFrame: {len(gps_df)} puntos")
+            
+            if len(gps_df) == 0:
+                return jsonify({
+                    'error': 'El archivo GPS no contiene puntos de rastreo válidos.',
+                    'suggestion': 'Verifica que el archivo .gpx contenga datos de track válidos con coordenadas y timestamps.'
+                })
+        except Exception as e:
+            return jsonify({
+                'error': f'Error al leer el archivo GPS: {str(e)}',
+                'suggestion': 'Asegúrate de que el archivo .gpx esté en formato válido GPX 1.1'
+            })
         
-        gas_df = parse_data_file(data_path, gas_type)
-        print(f"Gas DataFrame: {len(gas_df)} puntos")
-        print(f"Primeros valores de gas: {gas_df['gas_concentration'].head().tolist()}")
+        try:
+            gas_df = parse_data_file(data_path, gas_type)
+            print(f"Gas DataFrame: {len(gas_df)} puntos")
+            print(f"Primeros valores de gas: {gas_df['gas_concentration'].head().tolist()}")
+            
+            if len(gas_df) == 0:
+                return jsonify({
+                    'error': f'El archivo .data no contiene mediciones válidas de {gas_type}.',
+                    'suggestion': f'Verifica que el archivo contenga datos de {gas_type} del analizador LI-7810.'
+                })
+        except ValueError as e:
+            return jsonify({
+                'error': f'Error al leer el archivo del analizador: {str(e)}',
+                'suggestion': 'Asegúrate de que el archivo .data sea del formato LI-7810 con header DATAH.'
+            })
+        except Exception as e:
+            return jsonify({
+                'error': f'Error inesperado al procesar el archivo .data: {str(e)}',
+                'suggestion': 'Verifica que el archivo esté completo y no esté corrupto.'
+            })
         
         with open('debug_log.txt', 'a', encoding='utf-8') as f:
             f.write(f"GPS DataFrame: {len(gps_df)} puntos\n")
@@ -225,7 +261,22 @@ def upload_file():
             f.write(f"Primeros valores de gas en merged: {merged_df['gas_concentration'].head().tolist()}\n")
         
         if len(merged_df) == 0:
-            return jsonify({'error': 'No se pudieron combinar los datos GPS y del analizador'})
+            return jsonify({
+                'error': 'No se pudieron combinar los datos GPS y del analizador. Verifica que los archivos correspondan al mismo período de tiempo.',
+                'details': {
+                    'gps_points': len(gps_df),
+                    'gas_points': len(gas_df),
+                    'gps_time_range': f"{gps_df['timestamp'].min()} a {gps_df['timestamp'].max()}" if len(gps_df) > 0 else 'N/A',
+                    'gas_time_range': f"{gas_df['timestamp'].min()} a {gas_df['timestamp'].max()}" if len(gas_df) > 0 else 'N/A'
+                }
+            })
+        
+        # Validar que hay suficientes puntos
+        if len(merged_df) < 10:
+            return jsonify({
+                'error': f'Insuficientes puntos combinados ({len(merged_df)}). Se necesitan al menos 10 puntos para el análisis.',
+                'suggestion': 'Verifica que los archivos GPS y del analizador se hayan grabado al mismo tiempo.'
+            })
         
         # Preparar datos para análisis gaussiano - VERSIÓN MEJORADA V2
         
@@ -349,6 +400,13 @@ def upload_file():
                 print(f"\n*** MEJOR RESULTADO: R²={results['R2']:.3f}, Estabilidad={results['stability_used']} ***\n")
             else:
                 # Si no funciona, usar valores por defecto sin modelo gaussiano
+                detailed_error = f"No se encontraron suficientes puntos válidos. "
+                detailed_error += f"Total de puntos: {len(df)}. "
+                detailed_error += f"Posibles causas: "
+                detailed_error += f"1) Datos muy dispersos, "
+                detailed_error += f"2) Concentraciones muy uniformes (sin pico claro), "
+                detailed_error += f"3) Archivos GPS y .data de diferentes mediciones."
+                
                 results = {
                     "Q_hat_gps": 0.0,
                     "Q_std_gps": 0.0,
@@ -357,19 +415,31 @@ def upload_file():
                     "R2": 0.0,
                     "n_points": len(df),
                     "stability_used": "D",
-                    "error": f"No se pudo calcular: {error_msg}"
+                    "error": detailed_error,
+                    "debug_info": {
+                        "merged_points": len(merged_df),
+                        "filtered_points": len(df),
+                        "background": float(background_default),
+                        "max_concentration": float(merged_df['gas_concentration'].max()),
+                        "gas_range": f"{merged_df['gas_concentration'].min():.2f} - {merged_df['gas_concentration'].max():.2f}",
+                        "last_error": error_msg
+                    }
                 }
         except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
             results = {
                 "Q_hat_gps": 0.0,
                 "Q_std_gps": 0.0,
                 "Q_hat_gph": 0.0,
                 "Q_std_gph": 0.0,
                 "R2": 0.0,
-                "n_points": len(df),
+                "n_points": len(df) if 'df' in locals() else 0,
                 "stability_used": "D",
-                "error": f"Error en análisis: {str(e)}"
+                "error": f"Error en análisis gaussiano: {str(e)}",
+                "trace": error_trace
             }
+            print(f"Error en análisis: {error_trace}")
         
         # Crear gráficas
         # 1. Mapa satelital 3D con puntos y mapa de calor
