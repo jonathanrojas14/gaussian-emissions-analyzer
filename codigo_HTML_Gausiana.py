@@ -398,6 +398,17 @@ def upload_file():
             if best_results is not None:
                 results = best_results
                 print(f"\n*** MEJOR RESULTADO: R²={results['R2']:.3f}, Estabilidad={results['stability_used']} ***\n")
+                
+                # Agregar sugerencias si el R² es bajo
+                if results['R2'] < 0.5:
+                    results['warning'] = "El R² es bajo, lo que indica que el modelo no se ajusta bien a los datos."
+                    results['suggestions'] = [
+                        "Los datos pueden ser muy dispersos o ruidosos",
+                        "La fuente puede no estar bien localizada",
+                        "Puede haber múltiples fuentes de emisión",
+                        "Las condiciones de viento pueden haber sido muy variables",
+                        "Considera repetir la medición con mejores condiciones"
+                    ]
             else:
                 # Si no funciona, usar valores por defecto sin modelo gaussiano
                 detailed_error = f"No se encontraron suficientes puntos válidos. "
@@ -406,6 +417,32 @@ def upload_file():
                 detailed_error += f"1) Datos muy dispersos, "
                 detailed_error += f"2) Concentraciones muy uniformes (sin pico claro), "
                 detailed_error += f"3) Archivos GPS y .data de diferentes mediciones."
+                
+                # Agregar recomendaciones
+                recommendations = {
+                    "field_recommendations": [
+                        "Realizar mediciones en línea recta o patrón en zigzag alrededor de la fuente sospechada",
+                        "Mantener velocidad constante durante el recorrido (aprox. 3-5 km/h)",
+                        "Realizar el recorrido completo en 15-30 minutos máximo",
+                        "Preferiblemente medir con viento estable (velocidad > 1 m/s)",
+                        "Iniciar el GPS y el analizador al mismo tiempo y sincronizar los relojes",
+                        "Pasar lo más cerca posible de la fuente sospechada (50-200 metros)"
+                    ],
+                    "data_quality": [
+                        "Verificar que ambos archivos (.gpx y .data) sean de la MISMA medición",
+                        "Confirmar que los rangos de tiempo coincidan",
+                        "Revisar que haya un pico claro de concentración en los datos",
+                        "Asegurar al menos 50-100 puntos GPS en el recorrido",
+                        "Verificar que las concentraciones varíen significativamente"
+                    ],
+                    "optimal_conditions": [
+                        "Viento moderado (2-5 m/s) - ni muy débil ni muy fuerte",
+                        "Condiciones atmosféricas estables (no lluvias, no tormentas)",
+                        "Realizar mediciones en horas de luz del día",
+                        "Evitar mediciones con cambios bruscos de viento",
+                        "Distancia mínima a la fuente: 20-50 metros"
+                    ]
+                }
                 
                 results = {
                     "Q_hat_gps": 0.0,
@@ -416,6 +453,7 @@ def upload_file():
                     "n_points": len(df),
                     "stability_used": "D",
                     "error": detailed_error,
+                    "recommendations": recommendations,
                     "debug_info": {
                         "merged_points": len(merged_df),
                         "filtered_points": len(df),
